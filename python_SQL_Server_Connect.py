@@ -19,9 +19,6 @@ class SQLServerConnect:
         cursor = self.conn.cursor()
         cursor.execute(query)
         rows = cursor.fetchall()
-        for row in rows:
-            print(row)
-
         return rows
 
     def close_conn(self):
