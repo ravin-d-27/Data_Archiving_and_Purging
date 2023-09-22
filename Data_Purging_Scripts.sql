@@ -80,3 +80,27 @@ BEGIN
 
     EXEC(@SQL);
 END;
+
+-- Create Table and Insert Data from Source DB to Destination DB along with creation time if some conditions are provided
+
+CREATE PROCEDURE CopyTableFromSourceToTargetConditionWithLogColumn
+    @SourceDatabase NVARCHAR(100),
+	@SourceSchema nvarchar(100),
+    @SourceTable NVARCHAR(100),
+    @TargetDatabase NVARCHAR(100),
+	@TargetSchema nvarchar(100),
+    @TargetTable NVARCHAR(100),
+	@condition nvarchar(MAX)
+AS
+BEGIN
+    DECLARE @SQL NVARCHAR(MAX);
+
+    SET @SQL = '
+        USE ' + QUOTENAME(@TargetDatabase) + ';
+        SELECT *, GETDATE() AS Logs
+        INTO ' + QUOTENAME(@TargetDatabase) + '.'+ QUOTENAME(@TargetSchema) +'.' + QUOTENAME(@TargetTable) + '
+        FROM ' + QUOTENAME(@SourceDatabase) + '.'+ QUOTENAME(@SourceSchema) +'.' + QUOTENAME(@SourceTable) + 
+		' ' + @condition + ';';
+
+    EXEC(@SQL);
+END;
