@@ -8,6 +8,6 @@ exec CopyTableFromSourceToTargetWithConditions 'AdventureWorks2022', 'HumanResou
 use AdventureWorks2022;
 exec COPY_ALL_DATA_INCLUDING_CHILD_TABLES_Modified 'AdventureWorks2022', 'Person', 'Person', 'AdventureWorks2022Backup', 'dbo', 'Person', '';
 
--- For PROCEDURE COPY_ALL_DATA_WITH_LOGS_SAME_MESSAGE,
+-- For PROCEDURE COPY_ALL_DATA_WITH_LOGS,
 use AdventureWorks2022;
 exec COPY_ALL_DATA_WITH_LOGS 'AdventureWorks2022', 'Purchasing', 'Vendor', 'TestDB_Backup', 'dbo', 'Vendor', '', '','Copying vendor';
