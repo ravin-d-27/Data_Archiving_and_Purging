@@ -106,7 +106,7 @@ BEGIN
 END;
 
 
-CREATE PROCEDURE COPY_ALL_DATA_WITH_LOGS_SAME_MESSAGE
+CREATE PROCEDURE COPY_ALL_DATA_WITH_LOGS
     @SourceDatabase NVARCHAR(100),
     @SourceSchema NVARCHAR(100),
     @SourceTable NVARCHAR(100),
@@ -114,7 +114,8 @@ CREATE PROCEDURE COPY_ALL_DATA_WITH_LOGS_SAME_MESSAGE
     @TargetSchema NVARCHAR(100),
     @TargetTable NVARCHAR(100),
     @condition NVARCHAR(MAX),
-    @LogsID INT OUTPUT
+    @LogsID INT OUTPUT,
+	@message NVARCHAR(MAX)
 
 AS
 BEGIN
@@ -150,11 +151,12 @@ BEGIN
 
     -- Insert a record into Log_Table and get the generated LogsID
     SET @SQL = '
-        USE ' + QUOTENAME(@TargetDatabase) + ';
-        INSERT INTO ' + QUOTENAME(@TargetDatabase) +'.'+QUOTENAME(@TargetSchema) + '.Log_Table (LogMessage)
-        VALUES (''Log message for this run'');
-        SET @LogsID = SCOPE_IDENTITY();';
-    EXEC sp_executesql @SQL, N'@LogsID INT OUTPUT', @LogsID OUTPUT;
+    USE ' + QUOTENAME(@TargetDatabase) + ';
+    INSERT INTO ' + QUOTENAME(@TargetDatabase) + '.' + QUOTENAME(@TargetSchema) + '.Log_Table (LogMessage)
+    VALUES (@message);
+    SET @LogsID = SCOPE_IDENTITY();';
+	EXEC sp_executesql @SQL, N'@message NVARCHAR(MAX), @LogsID INT OUTPUT', @message, @LogsID OUTPUT;
+
 
     -- Copy data from source table to target table
     SET @SQL = '

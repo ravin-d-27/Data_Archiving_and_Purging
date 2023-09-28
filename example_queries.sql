@@ -10,4 +10,4 @@ exec COPY_ALL_DATA_INCLUDING_CHILD_TABLES_Modified 'AdventureWorks2022', 'Person
 
 -- For PROCEDURE COPY_ALL_DATA_WITH_LOGS_SAME_MESSAGE,
 use AdventureWorks2022;
-exec COPY_ALL_DATA_WITH_LOGS_106 'AdventureWorks2022', 'Sales', 'Customer', 'TestDB_Backup', 'dbo', 'Customer', '', '';
+exec COPY_ALL_DATA_WITH_LOGS 'AdventureWorks2022', 'Purchasing', 'Vendor', 'TestDB_Backup', 'dbo', 'Vendor', '', '','Copying vendor';
