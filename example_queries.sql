@@ -7,3 +7,7 @@ exec CopyTableFromSourceToTargetWithConditions 'AdventureWorks2022', 'HumanResou
 -- For using COPY_ALL_DATA_INCLUDING_CHILD_TABLES_Modified, you have to be in the source database itself for proper functioning
 use AdventureWorks2022;
 exec COPY_ALL_DATA_INCLUDING_CHILD_TABLES_Modified 'AdventureWorks2022', 'Person', 'Person', 'AdventureWorks2022Backup', 'dbo', 'Person', '';
+
+-- For PROCEDURE COPY_ALL_DATA_WITH_LOGS_SAME_MESSAGE,
+use AdventureWorks2022;
+exec COPY_ALL_DATA_WITH_LOGS_106 'AdventureWorks2022', 'Sales', 'Customer', 'TestDB_Backup', 'dbo', 'Customer', '', '';
