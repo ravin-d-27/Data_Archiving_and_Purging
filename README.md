@@ -327,7 +327,37 @@ EXEC COPY_ALL_DATA_WITH_LOGS
     @LogsID = @LogsID OUTPUT;
 </pre>
 
+
 </body>
+
+<body>
+    <h1>Stored Procedures for Dynamic Data Updation</h1>
+    <p>This SQL script contains two stored procedures for dynamic data updation and finding extra columns in a source table that are not present in a destination table.</p>
+    <h2>FindMissingColumns_with_datatype_and_update_1</h2>
+    <p>The first stored procedure, FindMissingColumns_with_datatype_and_update_1, creates a temporary table to store column names and data types of a source table. It then removes the column names that exist in the destination table and selects the remaining columns (missing in destination) along with their data types. The stored procedure then uses a cursor to loop through the remaining columns and their data types, and adds them to the destination table. Finally, the temporary table is dropped.</p>
+    <h3>Parameters:</h3>
+    <ul>
+        <li>@source_table_name: the name of the source table</li>
+        <li>@destination_table_name: the name of the destination table</li>
+    </ul>
+    <h3>Example usage:</h3>
+    <pre>EXEC FindMissingColumns_with_datatype_and_update_1 'source_table', 'destination_table'</pre>
+    <h2>Find_Extra_Columns_Modified_2</h2>
+    <p>The second stored procedure, Find_Extra_Columns_Modified_2, finds the extra columns in a source table that are not present in a destination table. It takes the source table name, destination table name, and an output parameter for the column list as input. The output parameter will contain a comma-separated list of the extra columns in the source table. The procedure creates two temporary tables to store the column names and uses dynamic SQL to query the column names from the source and destination tables. It then removes the column names that exist in the destination table and concatenates the remaining column names into the output parameter.</p>
+    <h3>Parameters:</h3>
+    <ul>
+        <li>@source_table_name: the name of the source table</li>
+        <li>@destination_table_name: the name of the destination table</li>
+        <li>@ColumnList: an output parameter for the column list</li>
+    </ul>
+    <h3>Example usage:</h3>
+    <pre>
+    DECLARE @ColumnList NVARCHAR(MAX);
+    EXEC Find_Extra_Columns_Modified_2 'source_table', 'destination_table', @ColumnList OUTPUT;
+    SELECT @ColumnList AS Extra_Columns;
+    </pre>
+</body>
+
 
 
 </html>
