@@ -183,7 +183,7 @@ END;
 
 
 
-CREATE PROCEDURE UPDATION_OF_DATA_FINAL_104_WITH_LOGS_UPDATED_24
+CREATE PROCEDURE UPDATION_OF_DATA_PROPER_LOGS_FAULT_TOLERANCE_1
     @SourceDatabase NVARCHAR(100),
     @SourceSchema NVARCHAR(100),
     @SourceTable NVARCHAR(100),
@@ -211,7 +211,22 @@ BEGIN
       AND DB_NAME() = @SourceDatabase;
 
 	select * from #ChildTables;
+	
+	DECLARE @StartTime DATETIME, @EndTime DATETIME;
+	SET @StartTime = GETDATE();
 
+
+		DECLARE @Purpose NVARCHAR(MAX);
+		DECLARE @Status NVARCHAR(MAX);
+		DECLARE @DestinationTableNames NVARCHAR(MAX);
+		DECLARE @TablesChanged NVARCHAR(MAX);
+		DECLARE @SourceTableName NVARCHAR(MAX);
+		DECLARE @Message_Req NVARCHAR(MAX);
+
+		DECLARE @final nvarchar(MAX);
+		DECLARE @change nvarchar(MAX);
+
+	 -- Creating a fix table if doesnt exists
 	  SET @SQL = '
         IF NOT EXISTS (SELECT 1 FROM ' + QUOTENAME(@TargetDatabase) + '.INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ' + QUOTENAME(@TargetSchema, '''') + ' AND TABLE_NAME = ''fix_table'')
         BEGIN
@@ -253,175 +268,207 @@ BEGIN
 	';
 	EXEC(@SQL);
 
+	BEGIN TRY
 
-	DECLARE @StartTime DATETIME, @EndTime DATETIME;
-	SET @StartTime = GETDATE();
-
-    -- Check if target table exists, if yes, insert data
-    SET @SQL = '
-        IF EXISTS (SELECT 1 FROM ' + QUOTENAME(@TargetDatabase) + '.INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ' + QUOTENAME(@TargetSchema, '''') + ' AND TABLE_NAME = ''' + @TargetTable + ''')
-        BEGIN
-            USE ' + QUOTENAME(@TargetDatabase) + ';
-            INSERT INTO ' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@TargetTable) + '
-            SELECT @LogsID AS LogsID, *
-            FROM ' + QUOTENAME(@SourceDatabase) + '.' + QUOTENAME(@SourceSchema) + '.' + QUOTENAME(@SourceTable) +
-            @condition + ';
-        END;
-    ';
-    -- Pass @LogsID as parameter
-    EXEC sp_executesql @SQL, N'@LogsID INT', @LogsID;
-
-
-
-
-	-- Check if child table exists, if yes, Insert it
-		DECLARE childTablesCursor CURSOR FOR
-		SELECT TableName FROM #ChildTables;
-		OPEN childTablesCursor;
-		FETCH NEXT FROM childTablesCursor INTO @ChildTableName;
-		WHILE @@FETCH_STATUS = 0
-		BEGIN
-		
-		BEGIN TRY
-
-
+			-- Check if target table exists, if yes, insert data
 			SET @SQL = '
-				IF EXISTS (SELECT 1 FROM ' + QUOTENAME(@TargetDatabase) + '.INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ' + QUOTENAME(@TargetSchema, '''') + ' AND TABLE_NAME = ''' + @ChildTableName + ''')
+				IF EXISTS (SELECT 1 FROM ' + QUOTENAME(@TargetDatabase) + '.INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ' + QUOTENAME(@TargetSchema, '''') + ' AND TABLE_NAME = ''' + @TargetTable + ''')
 				BEGIN
 					USE ' + QUOTENAME(@TargetDatabase) + ';
-					INSERT INTO ' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@ChildTableName) + '
+					INSERT INTO ' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@TargetTable) + '
 					SELECT @LogsID AS LogsID, *
-					FROM ' + QUOTENAME(@SourceDatabase) + '.' + QUOTENAME(@SourceSchema) + '.' + QUOTENAME(@ChildTableName) + @condition + ';
+					FROM ' + QUOTENAME(@SourceDatabase) + '.' + QUOTENAME(@SourceSchema) + '.' + QUOTENAME(@SourceTable) +
+					@condition + ';
 				END;
 			';
+			-- Pass @LogsID as parameter
 			EXEC sp_executesql @SQL, N'@LogsID INT', @LogsID;
 
-			END TRY
-			BEGIN CATCH
 
+
+
+			-- Check if child table exists, if yes, Insert it
+				DECLARE childTablesCursor CURSOR FOR
+				SELECT TableName FROM #ChildTables;
+				OPEN childTablesCursor;
+				FETCH NEXT FROM childTablesCursor INTO @ChildTableName;
+				WHILE @@FETCH_STATUS = 0
+				BEGIN
+		
 				BEGIN TRY
-					 SET @message = 'Altering the Table Structure';
-					 PRINT @message;
-					 DECLARE @TargetTablePath NVARCHAR(1000);
-					 SET @TargetTablePath = QUOTENAME(@TargetDatabase) + '.' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@ChildTableName);
-				 
-					 PRINT @ChildTableName;
-					 EXEC FindMissingColumns_with_datatype_and_update_1 @ChildTableName, @TargetTablePath;
+
 
 					SET @SQL = '
-					IF EXISTS (SELECT 1 FROM ' + QUOTENAME(@TargetDatabase) + '.INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ' + QUOTENAME(@TargetSchema, '''') + ' AND TABLE_NAME = ''' + @ChildTableName + ''')
-					BEGIN
-						USE ' + QUOTENAME(@TargetDatabase) + ';
-						INSERT INTO ' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@ChildTableName) + '
-						SELECT @LogsID AS LogsID, *
-						FROM ' + QUOTENAME(@SourceDatabase) + '.' + QUOTENAME(@SourceSchema) + '.' + QUOTENAME(@ChildTableName) + @condition + ';
-					END;
-				';
-				EXEC sp_executesql @SQL, N'@LogsID INT', @LogsID;
+						IF EXISTS (SELECT 1 FROM ' + QUOTENAME(@TargetDatabase) + '.INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ' + QUOTENAME(@TargetSchema, '''') + ' AND TABLE_NAME = ''' + @ChildTableName + ''')
+						BEGIN
+							USE ' + QUOTENAME(@TargetDatabase) + ';
+							INSERT INTO ' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@ChildTableName) + '
+							SELECT @LogsID AS LogsID, *
+							FROM ' + QUOTENAME(@SourceDatabase) + '.' + QUOTENAME(@SourceSchema) + '.' + QUOTENAME(@ChildTableName) + @condition + ';
+						END;
+					';
+					EXEC sp_executesql @SQL, N'@LogsID INT', @LogsID;
 
-				END TRY
-				BEGIN CATCH
+					END TRY
+					BEGIN CATCH
 
-				DECLARE @TargetTablePath_Dest NVARCHAR(1000);
-				DECLARE @TargetTablePath_Source NVARCHAR(1000);
-				SET @TargetTablePath_Dest = QUOTENAME(@TargetDatabase) + '.' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@ChildTableName);
-				SET @TargetTablePath_Source = QUOTENAME(@SourceDatabase) + '.' + QUOTENAME(@SourceSchema) + '.' + QUOTENAME(@ChildTableName);
+						BEGIN TRY
+							 SET @message = 'Altering the Table Structure';
+							 PRINT @message;
+							 DECLARE @TargetTablePath NVARCHAR(1000);
+							 SET @TargetTablePath = QUOTENAME(@TargetDatabase) + '.' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@ChildTableName);
+				 
+							 PRINT @ChildTableName;
+							 EXEC FindMissingColumns_with_datatype_and_update_1 @ChildTableName, @TargetTablePath;
 
-				DECLARE @result nvarchar(max);
-				EXEC Find_Extra_Columns_Modified_2 @TargetTablePath_Dest, @TargetTablePath_Source, @ColumnList = @result OUTPUT;
-				PRINT CONVERT(VARCHAR, @result);
+							SET @SQL = '
+							IF EXISTS (SELECT 1 FROM ' + QUOTENAME(@TargetDatabase) + '.INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ' + QUOTENAME(@TargetSchema, '''') + ' AND TABLE_NAME = ''' + @ChildTableName + ''')
+							BEGIN
+								USE ' + QUOTENAME(@TargetDatabase) + ';
+								INSERT INTO ' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@ChildTableName) + '
+								SELECT @LogsID AS LogsID, *
+								FROM ' + QUOTENAME(@SourceDatabase) + '.' + QUOTENAME(@SourceSchema) + '.' + QUOTENAME(@ChildTableName) + @condition + ';
+							END;
+						';
+						EXEC sp_executesql @SQL, N'@LogsID INT', @LogsID;
+
+						END TRY
+						BEGIN CATCH
+
+						DECLARE @TargetTablePath_Dest NVARCHAR(1000);
+						DECLARE @TargetTablePath_Source NVARCHAR(1000);
+						SET @TargetTablePath_Dest = QUOTENAME(@TargetDatabase) + '.' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@ChildTableName);
+						SET @TargetTablePath_Source = QUOTENAME(@SourceDatabase) + '.' + QUOTENAME(@SourceSchema) + '.' + QUOTENAME(@ChildTableName);
+
+						DECLARE @result nvarchar(max);
+						EXEC Find_Extra_Columns_Modified_2 @TargetTablePath_Dest, @TargetTablePath_Source, @ColumnList = @result OUTPUT;
+						PRINT CONVERT(VARCHAR, @result);
 
 				
 
-				SET @SQL = '
-				IF EXISTS (SELECT 1 FROM ' + QUOTENAME(@TargetDatabase) + '.INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ' + QUOTENAME(@TargetSchema, '''') + ' AND TABLE_NAME = ''' + @ChildTableName + ''')
-				BEGIN
-					USE ' + QUOTENAME(@TargetDatabase) + ';
-					INSERT INTO ' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@ChildTableName) + ' ('+'LogsID, '+ @result + ')
-					SELECT @LogsID AS LogsID, ' + @result + '
-					FROM ' + QUOTENAME(@SourceDatabase) + '.' + QUOTENAME(@SourceSchema) + '.' + QUOTENAME(@ChildTableName) + @condition + ';
+						SET @SQL = '
+						IF EXISTS (SELECT 1 FROM ' + QUOTENAME(@TargetDatabase) + '.INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ' + QUOTENAME(@TargetSchema, '''') + ' AND TABLE_NAME = ''' + @ChildTableName + ''')
+						BEGIN
+							USE ' + QUOTENAME(@TargetDatabase) + ';
+							INSERT INTO ' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@ChildTableName) + ' ('+'LogsID, '+ @result + ')
+							SELECT @LogsID AS LogsID, ' + @result + '
+							FROM ' + QUOTENAME(@SourceDatabase) + '.' + QUOTENAME(@SourceSchema) + '.' + QUOTENAME(@ChildTableName) + @condition + ';
+						END;
+						';
+
+						PRINT 'Dynamic SQL Statement:';
+						PRINT @SQL;
+
+						EXEC sp_executesql @SQL, N'@LogsID INT', @LogsID;
+
+						-- Write the part here
+						END CATCH
+
+					END CATCH
+
+					FETCH NEXT FROM childTablesCursor INTO @ChildTableName;
+
 				END;
-				';
 
-				PRINT 'Dynamic SQL Statement:';
-				PRINT @SQL;
+				CLOSE childTablesCursor;
+				DEALLOCATE childTablesCursor;
 
-				EXEC sp_executesql @SQL, N'@LogsID INT', @LogsID;
+			-- Clean up temporary table
+			DROP TABLE #ChildTables;
 
-				-- Write the part here
-				END CATCH
+			SET @EndTime = GETDATE();
 
-			END CATCH
+			DECLARE @primaryKeysList NVARCHAR(255);
+			EXEC findPrimaryKeys @TargetTablePath_Source, @primaryKeysList OUTPUT;
+			SELECT @primaryKeysList;
 
-			FETCH NEXT FROM childTablesCursor INTO @ChildTableName;
-
-		END;
-
-		CLOSE childTablesCursor;
-		DEALLOCATE childTablesCursor;
-
-    -- Clean up temporary table
-    DROP TABLE #ChildTables;
-
-	SET @EndTime = GETDATE();
-
-	DECLARE @primaryKeysList NVARCHAR(255);
-	EXEC findPrimaryKeys @TargetTablePath_Source, @primaryKeysList OUTPUT;
-	SELECT @primaryKeysList;
-
-    -- Insert a record into Log_Table and get the generated LogsID
-	SET @SQL = '
-    USE ' + QUOTENAME(@TargetDatabase) + ';
-    INSERT INTO ' + QUOTENAME(@TargetSchema) + '.Log_Table (
-        Purpose,
-        SourceTableName,
-        DestinationTableNames,
-        TablesChanged,
-        StartTime,
-        EndTime,
-        Status,
-        PrimaryKeyMoved
-    )
-    VALUES (
-        @Purpose,
-        @SourceTableName,
-        @DestinationTableNames,
-        @TablesChanged,
-        @StartTime,
-        @EndTime,
-        @Status,
-        @PrimaryKeyMoved
-    );
+		-- Insert a record into Log_Table and get the generated LogsID
+		SET @SQL = '
+		USE ' + QUOTENAME(@TargetDatabase) + ';
+		INSERT INTO ' + QUOTENAME(@TargetSchema) + '.Log_Table (
+			Purpose,
+			SourceTableName,
+			DestinationTableNames,
+			TablesChanged,
+			StartTime,
+			EndTime,
+			Status,
+			PrimaryKeyMoved
+		)
+		VALUES (
+			@Purpose,
+			@SourceTableName,
+			@DestinationTableNames,
+			@TablesChanged,
+			@StartTime,
+			@EndTime,
+			@Status,
+			@PrimaryKeyMoved
+		);
  
-';
+	';
 
-	DECLARE @Purpose NVARCHAR(MAX);
-	SET @Purpose = @message;
-
-	DECLARE @Status NVARCHAR(MAX);
-	SET @Status = 'Done';
-
-	DECLARE @DestinationTableNames NVARCHAR(MAX);
-	SET @DestinationTableNames = @TargetDatabase +' . '+ @TargetSchema + ' . ' + @TargetTable;
-
-	DECLARE @TablesChanged NVARCHAR(MAX);
-	SET @TablesChanged = 'Deciding';
-
-	DECLARE @SourceTableName NVARCHAR(MAX);
-	SET @SourceTableName = @SourceTable;
-
-	DECLARE @Message_Req NVARCHAR(MAX);
-	SET @Message_Req = @message;
-
-	DECLARE @final nvarchar(MAX);
-	DECLARE @change nvarchar(MAX);
-	EXEC FindChildTablesForParent_Working_5 @parent_table = @SourceTable, @final_list = @final OUTPUT, @changed_list = @change OUTPUT;
+		
+		SET @Purpose = @message;
+		SET @Status = 'Done';
+		SET @DestinationTableNames = @TargetDatabase +' . '+ @TargetSchema + ' . ' + @TargetTable;
+		SET @TablesChanged = 'Deciding';
+		SET @SourceTableName = @SourceTable;
+		SET @Message_Req = @message;
 
 
-	EXEC sp_executesql @SQL, N'@Purpose NVARCHAR(MAX), @SourceTableName NVARCHAR(MAX), @DestinationTableNames NVARCHAR(MAX), @TablesChanged NVARCHAR(MAX), @StartTime DATETIME, @EndTime DATETIME, @Status NVARCHAR(50), @PrimaryKeyMoved NVARCHAR(MAX), @LogsID INT OUTPUT', 
-		@Purpose, @SourceTableName, @DestinationTableNames, @change, @StartTime, @EndTime, @Status, @final, @LogsID OUTPUT;
+		EXEC FindChildTablesForParent_Working_5 @parent_table = @SourceTable, @final_list = @final OUTPUT, @changed_list = @change OUTPUT;
 
+		EXEC sp_executesql @SQL, N'@Purpose NVARCHAR(MAX), @SourceTableName NVARCHAR(MAX), @DestinationTableNames NVARCHAR(MAX), @TablesChanged NVARCHAR(MAX), @StartTime DATETIME, @EndTime DATETIME, @Status NVARCHAR(50), @PrimaryKeyMoved NVARCHAR(MAX), @LogsID INT OUTPUT', 
+			@Purpose, @SourceTableName, @DestinationTableNames, @change, @StartTime, @EndTime, @Status, @final, @LogsID OUTPUT;
+	
+	END TRY
+	BEGIN CATCH
+
+		SET @EndTime = GETDATE();
+		DECLARE @primaryKeysList2 NVARCHAR(255);
+		EXEC findPrimaryKeys @TargetTablePath_Source, @primaryKeysList2 OUTPUT;
+		SELECT @primaryKeysList;
+
+		-- Insert a record into Log_Table and get the generated LogsID
+		SET @SQL = '
+		USE ' + QUOTENAME(@TargetDatabase) + ';
+		INSERT INTO ' + QUOTENAME(@TargetSchema) + '.Log_Table (
+			Purpose,
+			SourceTableName,
+			DestinationTableNames,
+			TablesChanged,
+			StartTime,
+			EndTime,
+			Status,
+			PrimaryKeyMoved
+		)
+		VALUES (
+			@Purpose,
+			@SourceTableName,
+			@DestinationTableNames,
+			@TablesChanged,
+			@StartTime,
+			@EndTime,
+			@Status,
+			@PrimaryKeyMoved
+		);
+ 
+	';
+		SET @Purpose = @message;
+		SET @Status = '**** Failed ****';
+		SET @DestinationTableNames = @TargetDatabase +' . '+ @TargetSchema + ' . ' + @TargetTable;
+		SET @TablesChanged = 'Deciding';
+		SET @SourceTableName = @SourceTable;
+		SET @Message_Req = @message;
+
+		EXEC FindChildTablesForParent_Working_5 @parent_table = @SourceTable, @final_list = @final OUTPUT, @changed_list = @change OUTPUT;
+
+		EXEC sp_executesql @SQL, N'@Purpose NVARCHAR(MAX), @SourceTableName NVARCHAR(MAX), @DestinationTableNames NVARCHAR(MAX), @TablesChanged NVARCHAR(MAX), @StartTime DATETIME, @EndTime DATETIME, @Status NVARCHAR(50), @PrimaryKeyMoved NVARCHAR(MAX), @LogsID INT OUTPUT', 
+			@Purpose, @SourceTableName, @DestinationTableNames, @change, @StartTime, @EndTime, @Status, @final, @LogsID OUTPUT;
+
+	END CATCH;
 END;
 
 
-exec UPDATION_OF_DATA_FINAL_104_WITH_LOGS_UPDATED_24 'TestDB', 'dbo', 'ParentTable', 'TestDB_Backup', 'dbo', 'ParentTable', '', '','Just a sample try Again';
+exec UPDATION_OF_DATA_PROPER_LOGS_FAULT_TOLERANCE_1'TestDB', 'dbo', 'ParentTable', 'TestDB_Backup', 'dbo', 'ParentTable', '', '','Just a sample try Again';
