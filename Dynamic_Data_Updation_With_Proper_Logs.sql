@@ -180,8 +180,7 @@ BEGIN
     -- Print the final list for debugging
 END;
 
-
-CREATE PROCEDURE UPDATION_OF_DATA_FINAL_104_WITH_LOGS_UPDATED_15
+CREATE PROCEDURE UPDATION_OF_DATA_FINAL_104_WITH_LOGS_UPDATED_17
     @SourceDatabase NVARCHAR(100),
     @SourceSchema NVARCHAR(100),
     @SourceTable NVARCHAR(100),
@@ -375,7 +374,7 @@ BEGIN
 	SET @Status = 'Done';
 
 	DECLARE @DestinationTableNames NVARCHAR(MAX);
-	SET @DestinationTableNames = @TargetTable;
+	SET @DestinationTableNames = @TargetDatabase +' . '+ @TargetSchema + ' . ' + @TargetTable;
 
 	DECLARE @TablesChanged NVARCHAR(MAX);
 	SET @TablesChanged = 'Deciding';
@@ -397,4 +396,4 @@ BEGIN
 END;
 
 
-exec UPDATION_OF_DATA_FINAL_104_WITH_LOGS_UPDATED_15 'TestDB', 'dbo', 'ParentTable', 'TestDB_Backup', 'dbo', 'ParentTable', '', '','Copying';
+exec UPDATION_OF_DATA_FINAL_104_WITH_LOGS_UPDATED_17 'TestDB', 'dbo', 'ParentTable', 'TestDB_Backup', 'dbo', 'ParentTable', '', '','Just a sample try Again';
