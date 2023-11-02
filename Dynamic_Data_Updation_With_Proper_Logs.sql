@@ -180,7 +180,10 @@ BEGIN
     -- Print the final list for debugging
 END;
 
-CREATE PROCEDURE UPDATION_OF_DATA_FINAL_104_WITH_LOGS_UPDATED_17
+
+
+
+CREATE PROCEDURE UPDATION_OF_DATA_FINAL_104_WITH_LOGS_UPDATED_24
     @SourceDatabase NVARCHAR(100),
     @SourceSchema NVARCHAR(100),
     @SourceTable NVARCHAR(100),
@@ -206,6 +209,29 @@ BEGIN
     WHERE OBJECT_NAME(fk.referenced_object_id) = @SourceTable
       AND SCHEMA_NAME(t.schema_id) = @SourceSchema
       AND DB_NAME() = @SourceDatabase;
+
+	select * from #ChildTables;
+
+	  SET @SQL = '
+        IF NOT EXISTS (SELECT 1 FROM ' + QUOTENAME(@TargetDatabase) + '.INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ' + QUOTENAME(@TargetSchema, '''') + ' AND TABLE_NAME = ''fix_table'')
+        BEGIN
+            CREATE TABLE ' + QUOTENAME(@TargetDatabase) + '.' + QUOTENAME(@TargetSchema) + '.fix_table (
+                LogsID INT IDENTITY(1,1) PRIMARY KEY,
+                LogMessage NVARCHAR(MAX),
+                CreationDateTime DATETIME DEFAULT GETDATE()
+            );
+        END;
+    ';
+    EXEC(@SQL);
+
+    -- Insert a record into fix_table and get the generated LogsID
+    SET @SQL = '
+        USE ' + QUOTENAME(@TargetDatabase) + ';
+        INSERT INTO ' + QUOTENAME(@TargetSchema) + '.fix_table (LogMessage)
+        VALUES (@message);
+        SET @LogsID = SCOPE_IDENTITY();';
+    EXEC sp_executesql @SQL, N'@message NVARCHAR(MAX), @LogsID INT OUTPUT', @message, @LogsID OUTPUT;
+
 
 	-- Create Log_Table if it doesn't exist
 	SET @SQL = '
@@ -246,7 +272,9 @@ BEGIN
     EXEC sp_executesql @SQL, N'@LogsID INT', @LogsID;
 
 
-			 -- Check if child table exists, if yes, Insert it
+
+
+	-- Check if child table exists, if yes, Insert it
 		DECLARE childTablesCursor CURSOR FOR
 		SELECT TableName FROM #ChildTables;
 		OPEN childTablesCursor;
@@ -364,7 +392,7 @@ BEGIN
         @Status,
         @PrimaryKeyMoved
     );
-    SET @LogsID = SCOPE_IDENTITY();
+ 
 ';
 
 	DECLARE @Purpose NVARCHAR(MAX);
@@ -396,4 +424,4 @@ BEGIN
 END;
 
 
-exec UPDATION_OF_DATA_FINAL_104_WITH_LOGS_UPDATED_17 'TestDB', 'dbo', 'ParentTable', 'TestDB_Backup', 'dbo', 'ParentTable', '', '','Just a sample try Again';
+exec UPDATION_OF_DATA_FINAL_104_WITH_LOGS_UPDATED_24 'TestDB', 'dbo', 'ParentTable', 'TestDB_Backup', 'dbo', 'ParentTable', '', '','Just a sample try Again';
