@@ -1,3 +1,4 @@
+
 CREATE PROCEDURE FindMissingColumns_with_datatype_and_update_1
     @source_table_name NVARCHAR(255),
     @destination_table_name NVARCHAR(255)
@@ -182,8 +183,7 @@ END;
 
 
 
-
-CREATE PROCEDURE UPDATION_OF_DATA_PROPER_LOGS_FAULT_TOLERANCE_1
+CREATE PROCEDURE UPDATION_OF_DATA_PROPER_LOGS_FAULT_TOLERANCE_2
     @SourceDatabase NVARCHAR(100),
     @SourceSchema NVARCHAR(100),
     @SourceTable NVARCHAR(100),
@@ -270,21 +270,27 @@ BEGIN
 
 	BEGIN TRY
 
-			-- Check if target table exists, if yes, insert data
-			SET @SQL = '
-				IF EXISTS (SELECT 1 FROM ' + QUOTENAME(@TargetDatabase) + '.INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ' + QUOTENAME(@TargetSchema, '''') + ' AND TABLE_NAME = ''' + @TargetTable + ''')
-				BEGIN
-					USE ' + QUOTENAME(@TargetDatabase) + ';
-					INSERT INTO ' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@TargetTable) + '
-					SELECT @LogsID AS LogsID, *
-					FROM ' + QUOTENAME(@SourceDatabase) + '.' + QUOTENAME(@SourceSchema) + '.' + QUOTENAME(@SourceTable) +
-					@condition + ';
-				END;
-			';
-			-- Pass @LogsID as parameter
-			EXEC sp_executesql @SQL, N'@LogsID INT', @LogsID;
-
-
+    -- Check if target table exists, if yes, insert data, else create the table and add the data from the source
+    SET @SQL = '
+    IF EXISTS (SELECT 1 FROM ' + QUOTENAME(@TargetDatabase) + '.INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ' + QUOTENAME(@TargetSchema, '''') + ' AND TABLE_NAME = ''' + @TargetTable + ''')
+    BEGIN
+        USE ' + QUOTENAME(@TargetDatabase) + ';
+        INSERT INTO ' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@TargetTable) + '
+        SELECT @LogsID AS LogsID, *
+        FROM ' + QUOTENAME(@SourceDatabase) + '.' + QUOTENAME(@SourceSchema) + '.' + QUOTENAME(@SourceTable) +
+        @condition + ';
+    END;
+    ELSE
+    BEGIN
+        USE ' + QUOTENAME(@TargetDatabase) + ';
+        SELECT @LogsID AS LogsID, *
+        INTO ' + QUOTENAME(@TargetDatabase) + '.' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@TargetTable) + '
+        FROM ' + QUOTENAME(@SourceDatabase) + '.' + QUOTENAME(@SourceSchema) + '.' + QUOTENAME(@SourceTable) +
+        @condition + ';
+    END;
+';
+    -- Pass @LogsID as parameter
+    EXEC sp_executesql @SQL, N'@LogsID INT', @LogsID;
 
 
 			-- Check if child table exists, if yes, Insert it
@@ -298,16 +304,25 @@ BEGIN
 				BEGIN TRY
 
 
-					SET @SQL = '
+						SET @SQL = '
 						IF EXISTS (SELECT 1 FROM ' + QUOTENAME(@TargetDatabase) + '.INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ' + QUOTENAME(@TargetSchema, '''') + ' AND TABLE_NAME = ''' + @ChildTableName + ''')
 						BEGIN
-							USE ' + QUOTENAME(@TargetDatabase) + ';
-							INSERT INTO ' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@ChildTableName) + '
-							SELECT @LogsID AS LogsID, *
-							FROM ' + QUOTENAME(@SourceDatabase) + '.' + QUOTENAME(@SourceSchema) + '.' + QUOTENAME(@ChildTableName) + @condition + ';
-						END;
-					';
-					EXEC sp_executesql @SQL, N'@LogsID INT', @LogsID;
+						USE ' + QUOTENAME(@TargetDatabase) + ';
+						INSERT INTO ' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@ChildTableName) + '
+						SELECT @LogsID AS LogsID, *
+						FROM ' + QUOTENAME(@SourceDatabase) + '.' + QUOTENAME(@SourceSchema) + '.' + QUOTENAME(@ChildTableName) + @condition + ';
+					END;
+					ELSE
+					BEGIN
+						USE ' + QUOTENAME(@TargetDatabase) + ';
+						SELECT @LogsID AS LogsID, *
+						INTO ' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME(@ChildTableName) + '
+						FROM ' + QUOTENAME(@SourceDatabase) + '.' + QUOTENAME(@SourceSchema) + '.' + QUOTENAME(@ChildTableName) + 
+						@condition + ';
+					END;
+				';
+
+				EXEC sp_executesql @SQL, N'@LogsID INT', @LogsID;
 
 					END TRY
 					BEGIN CATCH
@@ -378,9 +393,8 @@ BEGIN
 
 			SET @EndTime = GETDATE();
 
-			DECLARE @primaryKeysList NVARCHAR(255);
-			EXEC findPrimaryKeys @TargetTablePath_Source, @primaryKeysList OUTPUT;
-			SELECT @primaryKeysList;
+			DECLARE @primaryKeysList3 NVARCHAR(255);
+			set @primaryKeysList3 = 'Need to find';
 
 		-- Insert a record into Log_Table and get the generated LogsID
 		SET @SQL = '
@@ -426,9 +440,8 @@ BEGIN
 	BEGIN CATCH
 
 		SET @EndTime = GETDATE();
-		DECLARE @primaryKeysList2 NVARCHAR(255);
-		EXEC findPrimaryKeys @TargetTablePath_Source, @primaryKeysList2 OUTPUT;
-		SELECT @primaryKeysList;
+		DECLARE @primaryKeysList4 NVARCHAR(255);
+		set @primaryKeysList4 = 'Need to find';
 
 		-- Insert a record into Log_Table and get the generated LogsID
 		SET @SQL = '
@@ -471,4 +484,4 @@ BEGIN
 END;
 
 
-exec UPDATION_OF_DATA_PROPER_LOGS_FAULT_TOLERANCE_1'TestDB', 'dbo', 'ParentTable', 'TestDB_Backup', 'dbo', 'ParentTable', '', '','Just a sample try Again';
+exec UPDATION_OF_DATA_PROPER_LOGS_FAULT_TOLERANCE_2 'TestDB', 'dbo', 'ParentTable', 'TestDB_Backup', 'dbo', 'ParentTable', '', '','Just a sample try Again';
