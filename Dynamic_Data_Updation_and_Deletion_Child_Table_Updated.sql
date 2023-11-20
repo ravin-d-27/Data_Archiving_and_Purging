@@ -4,6 +4,7 @@
     1) Column Name of the primary key of the table
     2) Data type of the primary key column
     3) No of primary keys moved
+	4) Added the Child Log ID for each record in child Table
 
 */
 
@@ -277,7 +278,7 @@ print @result_count;
 
 
 
-CREATE PROCEDURE UPDATION_OF_DATA_PROPER_LOGS_FAULT_TOLERANCE_HEADER_CHILD_13
+CREATE PROCEDURE UPDATION_OF_DATA_PROPER_LOGS_FAULT_TOLERANCE_HEADER_CHILD_19
     @SourceDatabase NVARCHAR(100),
     @SourceSchema NVARCHAR(100),
     @SourceTable NVARCHAR(100),
@@ -290,6 +291,7 @@ CREATE PROCEDURE UPDATION_OF_DATA_PROPER_LOGS_FAULT_TOLERANCE_HEADER_CHILD_13
 AS
 BEGIN
     DECLARE @SQL NVARCHAR(MAX);
+	DECLARE @ChildSQL NVARCHAR(MAX);
     DECLARE @ChildTableName NVARCHAR(100);
 
     -- Create temporary table to store child table names
@@ -309,7 +311,7 @@ BEGIN
 	DECLARE @StartTime DATETIME, @EndTime DATETIME;
 	SET @StartTime = GETDATE();
 
-	Create table #tempPrimary (logid int, tablename nvarchar(max), column_name nvarchar(max), datatype nvarchar(max), prim_keys nvarchar(max), no_of_prim int);
+	Create table #tempPrimary (logid int, childlogid int, tablename nvarchar(max), column_name nvarchar(max), datatype nvarchar(max), prim_keys nvarchar(max), no_of_prim int);
 
 
 		DECLARE @Purpose NVARCHAR(MAX);
@@ -333,7 +335,25 @@ BEGIN
             );
         END;
     ';
+
     EXEC(@SQL);
+
+	-- Creating a fix table 2 if doesnt exists 
+		  SET @SQL = '
+        IF NOT EXISTS (SELECT 1 FROM ' + QUOTENAME(@TargetDatabase) + '.INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ' + QUOTENAME(@TargetSchema, '''') + ' AND TABLE_NAME = ''fix_table_2'')
+        BEGIN
+            CREATE TABLE ' + QUOTENAME(@TargetDatabase) + '.' + QUOTENAME(@TargetSchema) + '.fix_table_2 (
+                Child_ID INT,
+                CreationDateTime DATETIME DEFAULT GETDATE()
+            );
+
+			USE ' + QUOTENAME(@TargetDatabase) + ';
+			INSERT INTO ' + QUOTENAME(@TargetSchema) + '.fix_table_2 (Child_ID)
+			VALUES (1);
+        END;
+    ';
+    EXEC(@SQL);
+
 
     -- Insert a record into fix_table and get the generated LogsID
     SET @SQL = '
@@ -368,7 +388,8 @@ BEGIN
 		IF NOT EXISTS (SELECT 1 FROM ' + QUOTENAME(@TargetDatabase) + '.INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ' + QUOTENAME(@TargetSchema, '''') + ' AND TABLE_NAME = ''Child_Log_Table'')
 		BEGIN
 			CREATE TABLE ' + QUOTENAME(@TargetDatabase) + '.' + QUOTENAME(@TargetSchema) + '.Child_Log_Table (
-				LogID INT IDENTITY(1,1),
+				LogID INT,
+				Child_LogsID INT IDENTITY(1,1) PRIMARY KEY,
 				TableName NVARCHAR(MAX),
 				ColumnName NVARCHAR(MAX),
 				DataType NVARCHAR(MAX),
@@ -414,15 +435,24 @@ BEGIN
 				BEGIN
 
 
-				SET @SQL = '
+			SET @SQL = '
 				DECLARE @pri_col_val NVARCHAR(MAX);
 				DECLARE @pri_col_datatype NVARCHAR(MAX);
 				DECLARE @prim_vals NVARCHAR(MAX);
 				DECLARE @prim_count NVARCHAR(MAX);
+				DECLARE @childid int;
+				DECLARE @childid_new int;
+
+				SELECT @childid = Child_ID FROM ' + QUOTENAME(@TargetDatabase) + '.' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME('fix_table_2') + ';
+
+				SET @childid_new = @childid + 1;
+				UPDATE ' + QUOTENAME(@TargetDatabase) + '.' + QUOTENAME(@TargetSchema) + '.' + QUOTENAME('fix_table_2') + ' SET Child_ID = @childid_new WHERE Child_ID = @childid;
 
 				EXEC GetPrimaryKeyInfo_6 ''' + @ChildTableName + ''', @pri_col_val OUTPUT, @pri_col_datatype OUTPUT, @prim_vals OUTPUT, @prim_count OUTPUT;
-				INSERT INTO #tempPrimary (logid, tablename , column_name, datatype, prim_keys, no_of_prim) VALUES (@LogsID, ''' + QUOTENAME(@ChildTableName) + ''', @pri_col_val, @pri_col_datatype, @prim_vals, @prim_count);
-					';
+
+				INSERT INTO #tempPrimary (logid, childlogid, tablename, column_name, datatype, prim_keys, no_of_prim)
+				VALUES (@LogsID, @childid, ''' + QUOTENAME(@ChildTableName) + ''', @pri_col_val, @pri_col_datatype, @prim_vals, @prim_count);
+			';
 
 				EXEC sp_executesql @SQL, N'@LogsID INT', @LogsID;
 
@@ -610,8 +640,8 @@ BEGIN
 
 			SET IDENTITY_INSERT ' + QUOTENAME(@TargetDatabase) + '.' + QUOTENAME(@TargetSchema) + '.Child_Log_Table ON;
 
-			INSERT INTO ' + QUOTENAME(@TargetDatabase) + '.' + QUOTENAME(@TargetSchema) + '.Child_Log_Table (LogID, TableName, ColumnName, DataType, PrimaryKeysMoved, No_of_Keys_Moved)
-			SELECT logid, tablename, column_name, datatype, prim_keys, no_of_prim FROM #tempPrimary;
+			INSERT INTO ' + QUOTENAME(@TargetDatabase) + '.' + QUOTENAME(@TargetSchema) + '.Child_Log_Table (LogID, Child_LogsID,TableName, ColumnName, DataType, PrimaryKeysMoved, No_of_Keys_Moved)
+			SELECT logid, childlogid, tablename, column_name, datatype, prim_keys, no_of_prim FROM #tempPrimary;
 
 			SET IDENTITY_INSERT ' + QUOTENAME(@TargetDatabase) + '.' + QUOTENAME(@TargetSchema) + '.Child_Log_Table OFF;
 	';
@@ -630,4 +660,9 @@ drop database TestDB_Backup;
 Create database TestDB_Backup;
 
 
-exec UPDATION_OF_DATA_PROPER_LOGS_FAULT_TOLERANCE_HEADER_CHILD_13 'TestDB', 'dbo', 'ParentTable', 'TestDB_Backup', 'dbo', 'ParentTable', '', '','Just a sample try Again';
+exec UPDATION_OF_DATA_PROPER_LOGS_FAULT_TOLERANCE_HEADER_CHILD_19 'TestDB', 'dbo', 'ParentTable', 'TestDB_Backup', 'dbo', 'ParentTable', '', '','Just a sample try Again';
+
+select * from TestDB_Backup.dbo.Child_Log_Table;
+select * from TestDB_Backup.dbo.Header_Log_Table;
+
+use TestDB;
