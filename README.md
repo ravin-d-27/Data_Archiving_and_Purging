@@ -1,363 +1,67 @@
 
-<body>
-
-<h1>SQL Procedures Documentation</h1>
-
-<p>This repository contains all the codes that helps for Data Purging and Archiving in Microsoft SQL Server</p>
-<p>I have also added Python and SQL Server Interface for easy access of data in your python applications</p>
-
-<h1>Refer to Data_Purging_Scripts_without_schemas.sql file</h1>
 
 <body>
 
-<h2>CreateandInsertDatawithoutSchemaNames Procedure</h2>
+  <h1>Data Archiving and Purging</h1>
 
-<h3>Description</h3>
+  <p>This repository contains the SQL Scripts to perform Data Archiving and Purging along with Proper updates via Email using Microsoft SQL Server.</p>
 
-<p>
-    The <code>CreateandInsertDatawithoutSchemaNames</code> procedure is used to create and insert data from a source table to a destination table without using schema names.
-</p>
+<p><b>Note: </b>This is a Real Time project which I was working on for my internship as a Data Engineer Intern at <b>Sagitec Solutions</p>
+</b>
+  <h2>Basic Definitions</h2>
+  <p><b>Data Archiving: </b>Data archiving is the process of moving data that is no longer actively used to a separate storage location for long-term retention. Archived data is typically retained for historical or compliance purposes.</p>
+  <p><b>Data Purging: </b>Data purging is the process of permanently removing or deleting data that is no longer needed or has exceeded its retention period. Purging ensures that unnecessary data is removed from the system to free up storage space and improve system performance.</p>
 
-<h3>Parameters</h3>
+  <h2>Features</h2>
 
-<table>
-    <tr>
-        <th>Parameter</th>
-        <th>Description</th>
-    </tr>
-    <tr>
-        <td><code>@SourceDatabase</code></td>
-        <td>Name of the source database.</td>
-    </tr>
-    <tr>
-        <td><code>@SourceTable</code></td>
-        <td>Name of the source table.</td>
-    </tr>
-    <tr>
-        <td><code>@TargetDatabase</code></td>
-        <td>Name of the target database.</td>
-    </tr>
-    <tr>
-        <td><code>@TargetTable</code></td>
-        <td>Name of the target table.</td>
-    </tr>
-</table>
+  <ol>
+    <li>
+      <strong>Ready to use</strong>
+      <ul>
+        <li>The Scripts provided in my repository is completely reusable</li>
+        <li>Just Change the parameters of the procedure according to your usecase, and it is ready to use</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Completely Dynamic (No Manual Intervention)</strong>
+      <ul>
+        <li>The SQL Scripts provided is completely dynamic, so no need of any manual intervention.</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Automatic column addition and missing column management</strong>
+      <ul>
+        <li>Whenever a new column is added in the source table, the same column will also be added in the target table also.</li>
+        <li>If a column is removed from the source table, the script won't delete the column in the target table. Instead it preserves the previous data in the column</li>
+      </ul>
+    </li>
+        <li>
+      <strong>Email Notification after completing the Data Archival and Data Purging Operation</strong>
+      <ul>
+        <li>If the operation is completed, it notifies the user through the given Email ID along with some details of the operations such as Start Time, End Time, Source Table, Destination Table and so on</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Maintains a Detailed Log Table</strong>
+      <ul>
+        <li>It also maintains a log table to have a track of the operations performed over time.</li>
+        <li>The Log Table has most of the information with respect to the operation as well as information about the Tables and the Data (Primary Keys Moved) as well</li>
+      </ul>
+    </li>
+  </ol>
 
-<h3>Usage</h3>
+  <h2>Tools Used</h2>
 
-<pre>
-EXEC CreateandInsertDatawithoutSchemaNames
-    @SourceDatabase = 'SourceDB',
-    @SourceTable = 'SourceTable',
-    @TargetDatabase = 'TargetDB',
-    @TargetTable = 'TargetTable';
-</pre>
+  <ul>
+    <li>Microsoft SQL Server 2022</li>
+    <li>Microsoft SSMS (SQL Server Management Studio 19)</li>
+  </ul>
 
-<h2>Procedure Steps</h2>
 
-<ol>
-    <li>Switch to the target database using the <code>USE</code> statement.</li>
-    <li>Select all records from the source table and insert them into the target table.</li>
-</ol>
+<h2>Acknowledgment</h2>
 
-<h2>Example</h2>
-
-<pre>
-EXEC CreateandInsertDatawithoutSchemaNames
-    @SourceDatabase = 'SourceDB',
-    @SourceTable = 'SourceTable',
-    @TargetDatabase = 'TargetDB',
-    @TargetTable = 'TargetTable';
-</pre>
+<ul>
+  <li>This project owes its success to the invaluable assistance and direction provided by Mr. Venkateswaran, Manager at Sagitec Solutions.</li>
+</ul>
 
 </body>
-
-
-
-<body>
-
-<h2>CreateandInsertDataintheAbsenceofSchema Procedure</h2>
-
-<h3>Description</h3>
-
-<p>
-    The <code>CreateandInsertDataintheAbsenceofSchema</code> procedure is used to create and insert data from a source table to a destination table when the schema is absent in your SQL.
-</p>
-
-<h3>Parameters</h3>
-
-<table>
-    <tr>
-        <th>Parameter</th>
-        <th>Description</th>
-    </tr>
-    <tr>
-        <td><code>@SourceDatabase</code></td>
-        <td>Name of the source database.</td>
-    </tr>
-    <tr>
-        <td><code>@SourceTable</code></td>
-        <td>Name of the source table.</td>
-    </tr>
-    <tr>
-        <td><code>@TargetDatabase</code></td>
-        <td>Name of the target database.</td>
-    </tr>
-    <tr>
-        <td><code>@TargetTable</code></td>
-        <td>Name of the target table.</td>
-    </tr>
-</table>
-
-<h3>Usage</h3>
-
-<pre>
-EXEC CreateandInsertDataintheAbsenceofSchema
-    @SourceDatabase = 'SourceDB',
-    @SourceTable = 'SourceTable',
-    @TargetDatabase = 'TargetDB',
-    @TargetTable = 'TargetTable';
-</pre>
-
-<h2>Procedure Steps</h2>
-
-<ol>
-    <li>Switch to the target database using the <code>USE</code> statement.</li>
-    <li>Select all records from the source table and insert them into the target table.</li>
-</ol>
-
-<h2>Example</h2>
-
-<pre>
-EXEC CreateandInsertDataintheAbsenceofSchema
-    @SourceDatabase = 'SourceDB',
-    @SourceTable = 'SourceTable',
-    @TargetDatabase = 'TargetDB',
-    @TargetTable = 'TargetTable';
-</pre>
-
-</body>
-
-
-
-
-<body>
-
-<h2>COPY_ALL_DATA_INCLUDING_CHILD_TABLES_Modified Procedure</h2>
-
-<h3>Description</h3>
-
-<p>
-    The <code>COPY_ALL_DATA_INCLUDING_CHILD_TABLES_Modified</code> procedure is used to copy data from a source table along with its child tables and constraints to a target database. It also allows the use of a condition to filter the data being copied.
-</p>
-
-<h3>Parameters</h3>
-
-<table>
-    <tr>
-        <th>Parameter</th>
-        <th>Description</th>
-    </tr>
-    <tr>
-        <td><code>@SourceDatabase</code></td>
-        <td>Name of the source database.</td>
-    </tr>
-    <tr>
-        <td><code>@SourceSchema</code></td>
-        <td>Name of the source schema.</td>
-    </tr>
-    <tr>
-        <td><code>@SourceTable</code></td>
-        <td>Name of the source table.</td>
-    </tr>
-    <tr>
-        <td><code>@TargetDatabase</code></td>
-        <td>Name of the target database.</td>
-    </tr>
-    <tr>
-        <td><code>@TargetSchema</code></td>
-        <td>Name of the target schema.</td>
-    </tr>
-    <tr>
-        <td><code>@TargetTable</code></td>
-        <td>Name of the target table.</td>
-    </tr>
-    <tr>
-        <td><code>@condition</code></td>
-        <td>Optional condition to filter the data being copied.</td>
-    </tr>
-</table>
-
-<h3>Usage</h3>
-
-<pre>
-EXEC COPY_ALL_DATA_INCLUDING_CHILD_TABLES_Modified
-    @SourceDatabase = 'SourceDB',
-    @SourceSchema = 'SourceSchema',
-    @SourceTable = 'SourceTable',
-    @TargetDatabase = 'TargetDB',
-    @TargetSchema = 'TargetSchema',
-    @TargetTable = 'TargetTable',
-    @condition = 'WHERE ColumnName = ''Value''';
-</pre>
-
-<h2>Procedure Steps</h2>
-
-<ol>
-    <li>Create a temporary table to store child table names.</li>
-    <li>Find child tables associated with the source table.</li>
-    <li>Copy data from the source table to the target table with an optional condition.</li>
-    <li>For each child table:</li>
-    <ol type="a">
-        <li>Copy data from the source child table to the target child table with an optional condition.</li>
-        <li>Create a foreign key constraint between the target child table and the source table.</li>
-    </ol>
-    <li>Clean up temporary table.</li>
-</ol>
-
-<h2>Example</h2>
-
-<pre>
-EXEC COPY_ALL_DATA_INCLUDING_CHILD_TABLES_Modified
-    @SourceDatabase = 'SourceDB',
-    @SourceSchema = 'SourceSchema',
-    @SourceTable = 'SourceTable',
-    @TargetDatabase = 'TargetDB',
-    @TargetSchema = 'TargetSchema',
-    @TargetTable = 'TargetTable',
-    @condition = 'WHERE ColumnName = ''Value''';
-</pre>
-
-</body>
-
-<body>
-
-<h2>COPY_ALL_DATA_WITH_LOGS Procedure</h2>
-
-<h2>Description</h2>
-
-<p>
-    The <code>COPY_ALL_DATA_WITH_LOGS</code> procedure is used to copy data from a source table to a target database along with its child tables and constraints. It also creates a log table to track the operations.
-</p>
-
-<h3>Parameters</h3>
-
-<table>
-    <tr>
-        <th>Parameter</th>
-        <th>Description</th>
-    </tr>
-    <tr>
-        <td><code>@SourceDatabase</code></td>
-        <td>Name of the source database.</td>
-    </tr>
-    <tr>
-        <td><code>@SourceSchema</code></td>
-        <td>Name of the source schema.</td>
-    </tr>
-    <tr>
-        <td><code>@SourceTable</code></td>
-        <td>Name of the source table.</td>
-    </tr>
-    <tr>
-        <td><code>@TargetDatabase</code></td>
-        <td>Name of the target database.</td>
-    </tr>
-    <tr>
-        <td><code>@TargetSchema</code></td>
-        <td>Name of the target schema.</td>
-    </tr>
-    <tr>
-        <td><code>@TargetTable</code></td>
-        <td>Name of the target table.</td>
-    </tr>
-    <tr>
-        <td><code>@condition</code></td>
-        <td>Optional condition to filter the data being copied.</td>
-    </tr>
-    <tr>
-        <td><code>@LogsID</code> (output)</td>
-        <td>Output parameter to retrieve the generated LogsID.</td>
-    </tr>
-</table>
-
-<h3>Usage</h3>
-
-<pre>
-DECLARE @LogsID INT;
-EXEC COPY_ALL_DATA_WITH_LOGS
-    @SourceDatabase = 'SourceDB',
-    @SourceSchema = 'SourceSchema',
-    @SourceTable = 'SourceTable',
-    @TargetDatabase = 'TargetDB',
-    @TargetSchema = 'TargetSchema',
-    @TargetTable = 'TargetTable',
-    @condition = 'WHERE ColumnName = ''Value''',
-    @LogsID = @LogsID OUTPUT;
-</pre>
-
-<h2>Procedure Steps</h2>
-
-<ol>
-    <li>Create a temporary table to store child table names.</li>
-    <li>Find child tables associated with the source table.</li>
-    <li>Create a log table in the target database if it doesn't already exist.</li>
-    <li>Insert a record into the log table with a default log message.</li>
-    <li>Get the generated LogsID from the log table.</li>
-    <li>Copy data from the source table to the target table with an optional condition, including the LogsID.</li>
-    <li>For each child table:</li>
-    <ol type="a">
-        <li>Copy data from the source child table to the target child table with an optional condition, including the LogsID.</li>
-    </ol>
-    <li>Clean up temporary table.</li>
-</ol>
-
-<h2>Example</h2>
-
-<pre>
-DECLARE @LogsID INT;
-EXEC COPY_ALL_DATA_WITH_LOGS
-    @SourceDatabase = 'SourceDB',
-    @SourceSchema = 'SourceSchema',
-    @SourceTable = 'SourceTable',
-    @TargetDatabase = 'TargetDB',
-    @TargetSchema = 'TargetSchema',
-    @TargetTable = 'TargetTable',
-    @condition = 'WHERE ColumnName = ''Value''',
-    @LogsID = @LogsID OUTPUT;
-</pre>
-
-
-</body>
-
-<body>
-    <h1>Stored Procedures for Dynamic Data Updation</h1>
-    <p>This SQL script contains two stored procedures for dynamic data updation and finding extra columns in a source table that are not present in a destination table.</p>
-    <h2>FindMissingColumns_with_datatype_and_update_1</h2>
-    <p>The first stored procedure, FindMissingColumns_with_datatype_and_update_1, creates a temporary table to store column names and data types of a source table. It then removes the column names that exist in the destination table and selects the remaining columns (missing in destination) along with their data types. The stored procedure then uses a cursor to loop through the remaining columns and their data types, and adds them to the destination table. Finally, the temporary table is dropped.</p>
-    <h3>Parameters:</h3>
-    <ul>
-        <li>@source_table_name: the name of the source table</li>
-        <li>@destination_table_name: the name of the destination table</li>
-    </ul>
-    <h3>Example usage:</h3>
-    <pre>EXEC FindMissingColumns_with_datatype_and_update_1 'source_table', 'destination_table'</pre>
-    <h2>Find_Extra_Columns_Modified_2</h2>
-    <p>The second stored procedure, Find_Extra_Columns_Modified_2, finds the extra columns in a source table that are not present in a destination table. It takes the source table name, destination table name, and an output parameter for the column list as input. The output parameter will contain a comma-separated list of the extra columns in the source table. The procedure creates two temporary tables to store the column names and uses dynamic SQL to query the column names from the source and destination tables. It then removes the column names that exist in the destination table and concatenates the remaining column names into the output parameter.</p>
-    <h3>Parameters:</h3>
-    <ul>
-        <li>@source_table_name: the name of the source table</li>
-        <li>@destination_table_name: the name of the destination table</li>
-        <li>@ColumnList: an output parameter for the column list</li>
-    </ul>
-    <h3>Example usage:</h3>
-    <pre>
-    DECLARE @ColumnList NVARCHAR(MAX);
-    EXEC Find_Extra_Columns_Modified_2 'source_table', 'destination_table', @ColumnList OUTPUT;
-    SELECT @ColumnList AS Extra_Columns;
-    </pre>
-</body>
-
-
-
-</html>
