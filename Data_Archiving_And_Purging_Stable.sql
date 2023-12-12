@@ -267,7 +267,7 @@ print @result_count;
 
 
 
-CREATE PROCEDURE UPDATION_OF_DATA_PROPER_LOGS_FAULT_TOLERANCE_HEADER_CHILD_23
+CREATE PROCEDURE UPDATION_OF_DATA_PROPER_LOGS_FAULT_TOLERANCE_HEADER_CHILD_25
     @SourceDatabase NVARCHAR(100),
     @SourceSchema NVARCHAR(100),
     @SourceTable NVARCHAR(100),
@@ -596,29 +596,29 @@ BEGIN
 			@Purpose, @SourceTableName, @DestinationTableNames, @change, @StartTime, @EndTime, @Status, @LogsID OUTPUT;
 
 		DECLARE @MailBody NVARCHAR(MAX);
-		SET @MailBody = 'The Data Archival and Purging Operation is Successfully finished' + CHAR(13) + CHAR(10) + 
-			'Here are some of the details for the operation: '
-			+ CHAR(13) + CHAR(10) + 
-			'Start Time: ' + QUOTENAME(@StartTime)
-			+ CHAR(13) + CHAR(10) + 
-			'End Time: ' + QUOTENAME(@EndTime)
-			+ CHAR(13) + CHAR(10) + 
-			'Source Database: ' + QUOTENAME(@SourceDatabase)
-			+ CHAR(13) + CHAR(10) + 
-			'Destination Database: ' + QUOTENAME(@TargetDatabase)
-			+ CHAR(13) + CHAR(10) + 
-			'Source Table Name: ' + QUOTENAME(@SourceTableName)
-			+ CHAR(13) + CHAR(10) + 
-			'Destination Table Name: ' + QUOTENAME(@DestinationTableNames)
-			+ CHAR(13) + CHAR(10) + 
-			'Status: ' + QUOTENAME(@Status)
-			;
+		SET @MailBody = 
+    '<html>' +
+    '<body>' +
+    '<p>The Data Archival and Purging Operation is Successfully finished</p>' +
+    '<p>Here are some of the details for the operation:</p>' +
+    '<table border="1">' +
+    '<tr><td>Start Time:</td><td>' + CONVERT(NVARCHAR, @StartTime, 121) + '</td></tr>' +
+    '<tr><td>End Time:</td><td>' + CONVERT(NVARCHAR, @EndTime, 121) + '</td></tr>' +
+    '<tr><td>Source Database:</td><td>' + @SourceDatabase + '</td></tr>' +
+    '<tr><td>Destination Database:</td><td>' + @TargetDatabase + '</td></tr>' +
+    '<tr><td>Source Table Name:</td><td>' + @SourceTableName + '</td></tr>' +
+    '<tr><td>Destination Table Name:</td><td>' + @DestinationTableNames + '</td></tr>' +
+    '<tr><td>Status:</td><td>' + @Status + '</td></tr>' +
+    '</table>' +
+    '</body>' +
+    '</html>';
 
 		EXEC msdb.dbo.sp_send_dbmail
 			@profile_name = 'SQLServer_Data_Purge_Notification',
-			@recipients = 'Your Email ID',
+			@recipients = 'abc@gmail.com',
 			@body = @MailBody,
-			@subject = 'Completion of Data Archiving and Purging Operation';
+			@subject = 'Completion of Data Archiving and Purging Operation',
+			@body_format = 'HTML';
 
 
 	END TRY
@@ -664,31 +664,31 @@ BEGIN
 			@Purpose, @SourceTableName, @DestinationTableNames, @change, @StartTime, @EndTime, @Status, @LogsID OUTPUT;
 
 
-		
-	DECLARE @MailBody2 NVARCHAR(MAX);
-		SET @MailBody2 = 'The Data Archival and Purging Operation is Failed' + CHAR(13) + CHAR(10) + 
-			'Here are some of the details for the operation: '
-			+ CHAR(13) + CHAR(10) + 
-			'Start Time: ' + QUOTENAME(@StartTime)
-			+ CHAR(13) + CHAR(10) + 
-			'End Time: ' + QUOTENAME(@EndTime)
-			+ CHAR(13) + CHAR(10) + 
-			'Source Database: ' + QUOTENAME(@SourceDatabase)
-			+ CHAR(13) + CHAR(10) + 
-			'Destination Database: ' + QUOTENAME(@TargetDatabase)
-			+ CHAR(13) + CHAR(10) + 
-			'Source Table Name: ' + QUOTENAME(@SourceTableName)
-			+ CHAR(13) + CHAR(10) + 
-			'Destination Table Name: ' + QUOTENAME(@DestinationTableNames)
-			+ CHAR(13) + CHAR(10) + 
-			'Status: ' + QUOTENAME(@Status)
-			;
+		DECLARE @MailBody2 NVARCHAR(MAX);
+
+SET @MailBody2 = 
+    '<html>' +
+    '<body>' +
+    '<p>The Data Archival and Purging Operation has Failed</p>' +
+    '<p>Here are some of the details for the operation:</p>' +
+    '<table border="1">' +
+    '<tr><td>Start Time:</td><td>' + CONVERT(NVARCHAR, @StartTime, 121) + '</td></tr>' +
+    '<tr><td>End Time:</td><td>' + CONVERT(NVARCHAR, @EndTime, 121) + '</td></tr>' +
+    '<tr><td>Source Database:</td><td>' + @SourceDatabase + '</td></tr>' +
+    '<tr><td>Destination Database:</td><td>' + @TargetDatabase + '</td></tr>' +
+    '<tr><td>Source Table Name:</td><td>' + @SourceTableName + '</td></tr>' +
+    '<tr><td>Destination Table Name:</td><td>' + @DestinationTableNames + '</td></tr>' +
+    '<tr><td>Status:</td><td>' + @Status + '</td></tr>' +
+    '</table>' +
+    '</body>' +
+    '</html>';
 
 		EXEC msdb.dbo.sp_send_dbmail
 			@profile_name = 'SQLServer_Data_Purge_Notification',
-			@recipients = 'Your Email ID',
+			@recipients = 'abc@gmail.com',
 			@body = @MailBody2,
-			@subject = 'Data Archiving and Purging Operation Failed';
+			@subject = 'Data Archiving and Purging Operation Failed',
+			@body_format = 'HTML';
 
 
 	END CATCH;
@@ -714,4 +714,16 @@ END;
 
 
 
-exec UPDATION_OF_DATA_PROPER_LOGS_FAULT_TOLERANCE_HEADER_CHILD_23 'TestDB', 'dbo', 'ParentTable', 'TestDB_Backup', 'dbo', 'ParentTable', '', '','Just a sample try Again';
+
+
+drop database TestDB_Backup;
+Create database TestDB_Backup;
+
+
+exec UPDATION_OF_DATA_PROPER_LOGS_FAULT_TOLERANCE_HEADER_CHILD_25 'TestDB', 'dbo', 'ParentTable', 'TestDB_Backup', 'dbo', 'ParentTable', '', '','Just a sample try Again';
+
+select * from TestDB_Backup.dbo.Child_Log_Table;
+select * from TestDB_Backup.dbo.Header_Log_Table;
+select * from TestDB_Backup.dbo.fix_table_2;
+
+use TestDB;
