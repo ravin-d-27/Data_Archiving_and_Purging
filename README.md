@@ -61,7 +61,7 @@
 <h2>Acknowledgment</h2>
 
 <ul>
-  <li>This project owes its success to the invaluable assistance and direction provided by Mr. Venkateswaran, Manager at Sagitec Solutions.</li>
+  <li>This project owes its success to the invaluable assistance and direction provided by Mr. P Vengateswaran, Sr Manager at Sagitec Solutions.</li>
 </ul>
 
 </body>
